@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -26,13 +25,18 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const getCameraPermission = async () => {
+  const getCameraPermission = async () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        streamRef.current = stream;
         setHasCameraPermission(true);
+        setIsCameraOff(false);
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -48,15 +52,29 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
       }
     };
 
+  useEffect(() => {
     getCameraPermission();
     
     return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
         }
     }
-  }, [toast]);
+  }, []);
+
+  const toggleCamera = () => {
+    if (isCameraOff) {
+        getCameraPermission();
+    } else {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setIsCameraOff(true);
+    }
+  }
 
 
   return (
@@ -84,7 +102,7 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
                  <div className="absolute top-2 left-2 z-10">
                     <Badge variant="secondary">You</Badge>
                  </div>
-                 <video ref={videoRef} className={cn("w-full h-full object-cover", isCameraOff ? "hidden" : "block")} autoPlay muted />
+                 <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted />
                  {isCameraOff && <div className="absolute inset-0 bg-black flex items-center justify-center"><VideoOff className="h-8 w-8 text-white"/></div>}
              </Card>
         </main>
@@ -115,7 +133,7 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
         <Button variant={isMuted ? "destructive" : "outline"} size="lg" onClick={() => setIsMuted(!isMuted)}>
           {isMuted ? <MicOff /> : <Mic />}
         </Button>
-        <Button variant={isCameraOff ? "destructive" : "outline"} size="lg" onClick={() => setIsCameraOff(!isCameraOff)}>
+        <Button variant={isCameraOff ? "destructive" : "outline"} size="lg" onClick={toggleCamera}>
           {isCameraOff ? <VideoOff /> : <Video />}
         </Button>
         <Button variant="outline" size="lg" disabled>
