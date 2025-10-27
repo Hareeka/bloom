@@ -8,7 +8,7 @@ import {
   Video,
   VideoOff,
   PhoneOff,
-  ShareScreen,
+  Share,
   MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import Link from 'next/link';
 
 export default function SessionRoomPage({ params }: { params: { id: string } }) {
   const [isMuted, setIsMuted] = useState(false);
@@ -118,7 +119,7 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
           {isCameraOff ? <VideoOff /> : <Video />}
         </Button>
         <Button variant="outline" size="lg" disabled>
-            <ShareScreen />
+            <Share />
         </Button>
         <Button variant="destructive" size="lg" asChild>
             <Link href="/sessions">
