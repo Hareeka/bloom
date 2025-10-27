@@ -37,6 +37,7 @@ const formSchema = z.object({
   course: z.string().min(3, "Course is required."),
   guidanceArea: z.string().min(1, "Please select a guidance area."),
   availability: z.string().min(1, "Please select your availability."),
+  interests: z.string().optional(),
   mentorPreference: z.string().optional(),
 });
 
@@ -53,6 +54,7 @@ export default function OnboardingPage() {
       course: "",
       guidanceArea: "",
       availability: "",
+      interests: "",
       mentorPreference: "",
     },
   });
@@ -152,6 +154,19 @@ export default function OnboardingPage() {
                   </FormItem>
                 )}
               />
+               <FormField
+                control={form.control}
+                name="interests"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Interests</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., AI, Web Development, Reading" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="availability"
@@ -162,7 +177,7 @@ export default function OnboardingPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select your availability" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="<5">Less than 5 hours/week</SelectItem>
@@ -219,3 +234,5 @@ export default function OnboardingPage() {
     </div>
   );
 }
+
+    

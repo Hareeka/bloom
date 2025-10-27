@@ -30,6 +30,10 @@
           "type": "string",
           "description": "The student's preference for a mentor."
         },
+        "interests": {
+          "type": "string",
+          "description": "The student's interests."
+        },
         "userId": {
           "type": "string",
           "description": "Reference to User. (Relationship: User 1:1 Student)"
@@ -1037,3 +1041,4 @@
     "reasoning": "The Firestore data structure is designed to support the Bloom application's features while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It utilizes structural segregation to ensure that collections contain documents with similar security requirements and denormalization to avoid hierarchical authorization dependencies.\n\nAuthorization Independence is achieved by denormalizing authorization-related data. For example, in the `/users/{userId}/plans/{planId}/days/{dayId}/tasks/{taskId}` path, if task-level authorization depended on the plan's ownership, the plan's `mentorId` or a `members` map would be denormalized into each task document. This eliminates the need for `get()` calls in security rules, supporting atomic operations.\n\nStructural Segregation is applied by separating user-owned data into `/users/{userId}` subcollections. This ensures a homogeneous security posture within each collection. Collaborative data, such as group study sessions, could use a `members` map within the document to manage access control.\n\nQAPs are supported via structural segregation. Lists of plans, days, or tasks can be securely queried within the user's path without exposing data from other users.\n\nThe `Reward` and `UpgradeReward` collections use a subcollection approach under `students/{studentId}` to track which students have earned specific rewards. Alternatively, rewards can be stored in a top-level collection and include a `studentIds` array. The subcollection approach is preferred when you need to query which rewards a specific student has earned efficiently, while the top-level collection with the `studentIds` array is more efficient if you frequently need to list all students who have a particular reward."
   }
 }
+    
