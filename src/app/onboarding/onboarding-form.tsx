@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useUser, useFirestore, setDocumentNonBlocking, FirebaseClientProvider } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -44,14 +45,14 @@ const formSchema = z.object({
 
 function OnboardingForm() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: user?.displayName || "",
+      name: "",
       course: "",
       guidanceArea: "",
       availability: "",
@@ -59,6 +60,20 @@ function OnboardingForm() {
       mentorPreference: "any",
     },
   });
+
+  useEffect(() => {
+    if (user && !isUserLoading) {
+      form.reset({
+        name: user.displayName || "",
+        course: "",
+        guidanceArea: "",
+        availability: "",
+        interests: "",
+        mentorPreference: "any",
+      });
+    }
+  }, [user, isUserLoading, form]);
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !firestore) {
@@ -76,7 +91,6 @@ function OnboardingForm() {
       ...values,
       userId: user.uid,
       id: user.uid,
-      email: user.email,
     }, { merge: true });
 
     toast({
@@ -85,6 +99,26 @@ function OnboardingForm() {
     });
 
     router.push("/matching");
+  }
+  
+  if (isUserLoading) {
+    return (
+       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+          <Card className="w-full max-w-2xl bg-card">
+            <CardHeader className="text-center">
+              <Skeleton className="h-8 w-32 mx-auto mb-4" />
+              <Skeleton className="h-8 w-64 mx-auto" />
+              <Skeleton className="h-4 w-80 mx-auto mt-2" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full" /></div>
+              <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full" /></div>
+              <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full" /></div>
+              <Skeleton className="h-11 w-full" />
+            </CardContent>
+          </Card>
+       </div>
+    )
   }
 
   return (
@@ -238,15 +272,16 @@ function OnboardingForm() {
   );
 }
 
-export function OnboardingFormComponent() {
-  const [isClient, setIsClient] = React.useState(false);
 
-  React.useEffect(() => {
+export function OnboardingFormComponent() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
     setIsClient(true);
   }, []);
 
   return (
-    <FirebaseClientProvider>
+     <FirebaseClientProvider>
       {isClient ? <OnboardingForm /> : null}
     </FirebaseClientProvider>
   )
