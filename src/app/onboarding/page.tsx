@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { FirebaseClientProvider, useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,7 +41,7 @@ const formSchema = z.object({
   mentorPreference: z.string().optional(),
 });
 
-export default function OnboardingPage() {
+function OnboardingFormComponent() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -74,6 +74,7 @@ export default function OnboardingPage() {
     setDocumentNonBlocking(studentRef, {
       ...values,
       userId: user.uid,
+      id: user.uid, // explicitly setting id for consistency
     }, { merge: true });
 
     toast({
@@ -235,4 +236,10 @@ export default function OnboardingPage() {
   );
 }
 
-    
+export default function OnboardingPage() {
+    return (
+        <FirebaseClientProvider>
+            <OnboardingFormComponent />
+        </FirebaseClientProvider>
+    );
+}
