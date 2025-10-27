@@ -34,6 +34,9 @@ export default function LandingPage() {
           <Logo />
           <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="flex items-center space-x-2">
+              <Button variant="link" asChild>
+                <Link href="/mentor-onboarding">Become a Mentor</Link>
+              </Button>
               <Button variant="ghost" asChild>
                 <Link href="/onboarding">Sign In</Link>
               </Button>
