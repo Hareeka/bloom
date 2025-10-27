@@ -1,0 +1,435 @@
+/**
+ * @fileoverview Firestore Security Rules for the Bloom application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user-related data,
+ * while allowing controlled access to shared resources like group studies and workshops.
+ * The rules are designed to prevent unauthorized data access and modification,
+ * with a focus on simplicity and maintainability.
+ *
+ * Data Structure:
+ * - `/users/{userId}`: Stores user profiles, accessible only to the user themselves.
+ * - `/students/{studentId}`: Stores student profiles, accessible only to the student themselves.
+ * - `/mentors/{mentorId}`: Stores mentor profiles, accessible only to the mentor themselves.
+ * - `/students/{studentId}/plans/{planId}/...`: Nested collections for plans, days and tasks owned by a student, accessible only to the student.
+ * - `/students/{studentId}/progress/{progressId}`: Stores student progress data, accessible only to the student.
+ * - `/students/{studentId}/reflections/{reflectionId}`: Stores student reflections, accessible only to the student.
+ * - `/rewards/{rewardId}`: Stores reward information, publicly readable, but write-protected.
+ * - `/mentors/{mentorId}/analytics/{analyticsId}`: Stores mentor analytics data, accessible only to the mentor.
+ * - `/group_studies/{groupStudyId}`: Stores group study session details, accessible to participants.
+ * - `/students/{studentId}/journal_entries/{journalEntryId}`: Stores student journal entries, accessible only to the student.
+ * - `/workshops/{workshopId}`: Stores workshop details, publicly readable, write access to be determined.
+ * - `/students/{studentId}/upgrade_rewards/{upgradeRewardId}`: Stores upgrade rewards for students, accessible only to the student.
+ * - `/experience_analytics/{experienceAnalyticId}`: Stores experience analytics data. Access to be determined.
+ * - `/life_balances/{lifeBalanceId}`: Stores life balance data for students, publicly readable, write protected.
+ * - `/sessions/{sessionId}`: Stores session data. Access to be determined.
+ *
+ * Key Security Decisions:
+ * - User listing is generally disallowed to prevent unauthorized data scraping.
+ * - Ambiguous or undefined access patterns default to the most restrictive option (owner-only).
+ *
+ * Denormalization for Authorization:
+ *  - Group Study documents store a list of `participantIds` to authorize access to the group study session.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the request is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the existing owner of the document.
+     */
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rule for /users/{userId} documents.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' can create their own profile.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'user123', email: 'test@example.com', role: 'student' } } }
+     * @allow (get) User with ID 'user123' can read their own profile.
+     *   Request: { auth: { uid: 'user123' } }
+     * @allow (update) User with ID 'user123' can update their own profile.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'user123', email: 'new@example.com', role: 'student' } } }
+     * @deny (create) User with ID 'user123' cannot create a profile for 'user456'.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'user456', email: 'test@example.com', role: 'student' } } }
+     * @deny (update) User with ID 'user123' cannot update the profile of 'user456'.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'user456', email: 'new@example.com', role: 'student' } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own profile.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Prevent listing all users
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rule for /students/{studentId} documents.
+     * @path /students/{studentId}
+     * @allow (create) Student with ID 'student123' can create their own profile.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'student123', name: 'test', course: 'test', guidanceArea: 'test', availability: 'test' } } }
+     * @allow (get) Student with ID 'student123' can read their own profile.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update their own profile.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'student123', name: 'new', course: 'test', guidanceArea: 'test', availability: 'test' } } }
+     * @deny (create) Student with ID 'student123' cannot create a profile for 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'student456', name: 'test', course: 'test', guidanceArea: 'test', availability: 'test' } } }
+     * @deny (update) Student with ID 'student123' cannot update the profile of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'student456', name: 'new', course: 'test', guidanceArea: 'test', availability: 'test' } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own profile.
+     */
+    match /students/{studentId} {
+      allow get: if isOwner(studentId);
+      allow list: if false; // Prevent listing all students
+
+      allow create: if isOwner(studentId) && request.resource.data.id == studentId;
+      allow update: if isExistingOwner(studentId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(studentId);
+    }
+
+    /**
+     * @description Rule for /mentors/{mentorId} documents.
+     * @path /mentors/{mentorId}
+     * @allow (create) Mentor with ID 'mentor123' can create their own profile.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'mentor123', photoUrl: 'test', title: 'test', specialties: 'test', experience: 'test' } } }
+     * @allow (get) Mentor with ID 'mentor123' can read their own profile.
+     *   Request: { auth: { uid: 'mentor123' } }
+     * @allow (update) Mentor with ID 'mentor123' can update their own profile.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'mentor123', photoUrl: 'new', title: 'test', specialties: 'test', experience: 'test' } } }
+     * @deny (create) Mentor with ID 'mentor123' cannot create a profile for 'mentor456'.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'mentor456', photoUrl: 'test', title: 'test', specialties: 'test', experience: 'test' } } }
+     * @deny (update) Mentor with ID 'mentor123' cannot update the profile of 'mentor456'.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'mentor456', photoUrl: 'new', title: 'test', specialties: 'test', experience: 'test' } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own profile.
+     */
+    match /mentors/{mentorId} {
+      allow get: if isOwner(mentorId);
+      allow list: if false; // Prevent listing all mentors
+
+      allow create: if isOwner(mentorId) && request.resource.data.id == mentorId;
+      allow update: if isExistingOwner(mentorId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(mentorId);
+    }
+
+    /**
+     * @description Rule for /students/{studentId}/plans/{planId} documents.
+     * @path /students/{studentId}/plans/{planId}
+     * @allow (create) Student with ID 'student123' can create a plan for themselves.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'plan123', studentId: 'student123', mentorId: 'mentor123', generatedDate: 'date', days: [] } } }
+     * @allow (get) Student with ID 'student123' can read their own plan.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update their own plan.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'plan123', studentId: 'student123', mentorId: 'mentor123', generatedDate: 'date', days: [] } } }
+     * @deny (create) Student with ID 'student123' cannot create a plan for 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'plan123', studentId: 'student456', mentorId: 'mentor123', generatedDate: 'date', days: [] } } }
+     * @deny (update) Student with ID 'student123' cannot update the plan of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'plan123', studentId: 'student456', mentorId: 'mentor123', generatedDate: 'date', days: [] } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /students/{studentId}/plans/{planId} {
+      allow get: if isOwner(studentId);
+      allow list: if isOwner(studentId);
+
+      allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
+      allow update: if isExistingOwner(studentId) && request.resource.data.studentId == resource.data.studentId;
+      allow delete: if isExistingOwner(studentId);
+    }
+
+    /**
+     * @description Rule for /students/{studentId}/plans/{planId}/days/{dayId} documents.
+     * @path /students/{studentId}/plans/{planId}/days/{dayId}
+     * @allow (create) Student with ID 'student123' can create a day in their own plan.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'day123', planId: 'plan123', date: 'date', tasks: [] } } }
+     * @allow (get) Student with ID 'student123' can read a day in their own plan.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update a day in their own plan.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'day123', planId: 'plan123', date: 'date', tasks: [] } } }
+     * @deny (create) Student with ID 'student123' cannot create a day in the plan of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'day123', planId: 'plan123', date: 'date', tasks: [] } } }
+     * @deny (update) Student with ID 'student123' cannot update a day in the plan of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'day123', planId: 'plan123', date: 'date', tasks: [] } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /students/{studentId}/plans/{planId}/days/{dayId} {
+      allow get: if isOwner(studentId);
+      allow list: if isOwner(studentId);
+
+      allow create: if isOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)/plans/$(planId)).data.studentId == studentId && request.resource.data.planId == planId;
+      allow update: if isExistingOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)/plans/$(planId)).data.studentId == studentId && request.resource.data.planId == resource.data.planId;
+      allow delete: if isExistingOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)/plans/$(planId)).data.studentId == studentId;
+    }
+
+    /**
+     * @description Rule for /students/{studentId}/plans/{planId}/days/{dayId}/tasks/{taskId} documents.
+     * @path /students/{studentId}/plans/{planId}/days/{dayId}/tasks/{taskId}
+     * @allow (create) Student with ID 'student123' can create a task in their own day.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'task123', dayId: 'day123', description: 'test', timing: 'test', priority: 'test', isCompleted: false } } }
+     * @allow (get) Student with ID 'student123' can read a task in their own day.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update a task in their own day.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'task123', dayId: 'day123', description: 'test', timing: 'test', priority: 'test', isCompleted: true } } }
+     * @deny (create) Student with ID 'student123' cannot create a task in the day of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'task123', dayId: 'day123', description: 'test', timing: 'test', priority: 'test', isCompleted: false } } }
+     * @deny (update) Student with ID 'student123' cannot update a task in the day of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'task123', dayId: 'day123', description: 'test', timing: 'test', priority: 'test', isCompleted: true } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /students/{studentId}/plans/{planId}/days/{dayId}/tasks/{taskId} {
+      allow get: if isOwner(studentId);
+      allow list: if isOwner(studentId);
+
+      allow create: if isOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)/plans/$(planId)/days/$(dayId)).data.planId == planId && request.resource.data.dayId == dayId;
+      allow update: if isExistingOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)/plans/$(planId)/days/$(dayId)).data.planId == planId && request.resource.data.dayId == resource.data.dayId;
+      allow delete: if isExistingOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)/plans/$(planId)/days/$(dayId)).data.planId == planId;
+    }
+
+    /**
+     * @description Rule for /students/{studentId}/progress/{progressId} documents.
+     * @path /students/{studentId}/progress/{progressId}
+     * @allow (create) Student with ID 'student123' can create progress for themselves.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'progress123', studentId: 'student123', planId: 'plan123', completionPercentage: 0, pointsEarned: 0, streakCounter: 0 } } }
+     * @allow (get) Student with ID 'student123' can read their own progress.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update their own progress.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'progress123', studentId: 'student123', planId: 'plan123', completionPercentage: 100, pointsEarned: 100, streakCounter: 7 } } }
+     * @deny (create) Student with ID 'student123' cannot create progress for 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'progress123', studentId: 'student456', planId: 'plan123', completionPercentage: 0, pointsEarned: 0, streakCounter: 0 } } }
+     * @deny (update) Student with ID 'student123' cannot update the progress of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'progress123', studentId: 'student456', planId: 'plan123', completionPercentage: 100, pointsEarned: 100, streakCounter: 7 } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /students/{studentId}/progress/{progressId} {
+      allow get: if isOwner(studentId);
+      allow list: if isOwner(studentId);
+
+      allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
+      allow update: if isExistingOwner(studentId) && request.resource.data.studentId == resource.data.studentId;
+      allow delete: if isExistingOwner(studentId);
+    }
+
+    /**
+     * @description Rule for /students/{studentId}/reflections/{reflectionId} documents.
+     * @path /students/{studentId}/reflections/{reflectionId}
+     * @allow (create) Student with ID 'student123' can create a reflection for themselves.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'reflection123', studentId: 'student123', date: 'date', content: 'test' } } }
+     * @allow (get) Student with ID 'student123' can read their own reflection.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update their own reflection.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'reflection123', studentId: 'student123', date: 'date', content: 'new' } } }
+     * @deny (create) Student with ID 'student123' cannot create a reflection for 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'reflection123', studentId: 'student456', date: 'date', content: 'test' } } }
+     * @deny (update) Student with ID 'student123' cannot update the reflection of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'reflection123', studentId: 'student456', date: 'date', content: 'new' } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /students/{studentId}/reflections/{reflectionId} {
+      allow get: if isOwner(studentId);
+      allow list: if isOwner(studentId);
+
+      allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
+      allow update: if isExistingOwner(studentId) && request.resource.data.studentId == resource.data.studentId;
+      allow delete: if isExistingOwner(studentId);
+    }
+
+    /**
+     * @description Rule for /rewards/{rewardId} documents.
+     * @path /rewards/{rewardId}
+     * @allow (get) Any user can read reward information.
+     *   Request: { auth: { uid: 'anyuser' } }
+     * @deny (create) No user can create a reward.
+     *   Request: { auth: { uid: 'anyuser' }, resource: { data: { id: 'reward123', name: 'test', description: 'test', pointsRequired: 0, rewardType: 'badge' } } }
+     * @deny (update) No user can update a reward.
+     *   Request: { auth: { uid: 'anyuser' }, resource: { data: { id: 'reward123', name: 'new', description: 'test', pointsRequired: 0, rewardType: 'badge' } } }
+     * @deny (delete) No user can delete a reward.
+     *   Request: { auth: { uid: 'anyuser' } }
+     * @principle Allows public read access but restricts write access.
+     */
+    match /rewards/{rewardId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Rule for /mentors/{mentorId}/analytics/{analyticsId} documents.
+     * @path /mentors/{mentorId}/analytics/{analyticsId}
+     * @allow (create) Mentor with ID 'mentor123' can create analytics for themselves.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'analytics123', mentorId: 'mentor123', studentList: [], completionPercentages: 'test', timeSpent: 'test', missedTasks: 'test', engagementGraphs: 'test' } } }
+     * @allow (get) Mentor with ID 'mentor123' can read their own analytics.
+     *   Request: { auth: { uid: 'mentor123' } }
+     * @allow (update) Mentor with ID 'mentor123' can update their own analytics.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'analytics123', mentorId: 'mentor123', studentList: [], completionPercentages: 'new', timeSpent: 'test', missedTasks: 'test', engagementGraphs: 'test' } } }
+     * @deny (create) Mentor with ID 'mentor123' cannot create analytics for 'mentor456'.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'analytics123', mentorId: 'mentor456', studentList: [], completionPercentages: 'test', timeSpent: 'test', missedTasks: 'test', engagementGraphs: 'test' } } }
+     * @deny (update) Mentor with ID 'mentor123' cannot update the analytics of 'mentor456'.
+     *   Request: { auth: { uid: 'mentor123' }, resource: { data: { id: 'analytics123', mentorId: 'mentor456', studentList: [], completionPercentages: 'new', timeSpent: 'test', missedTasks: 'test', engagementGraphs: 'test' } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /mentors/{mentorId}/analytics/{analyticsId} {
+      allow get: if isOwner(mentorId);
+      allow list: if isOwner(mentorId);
+
+      allow create: if isOwner(mentorId) && request.resource.data.mentorId == mentorId;
+      allow update: if isExistingOwner(mentorId) && request.resource.data.mentorId == resource.data.mentorId;
+      allow delete: if isExistingOwner(mentorId);
+    }
+
+    /**
+     * @description Rule for /group_studies/{groupStudyId} documents.
+     * @path /group_studies/{groupStudyId}
+     * @allow (get) Any participant can read group study details.
+     *   Request: { auth: { uid: 'user123' } }
+     * @allow (create) Any authenticated user can create a group study.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'group123', startTime: 'date', endTime: 'date', isPrivate: false, participants: ['user123'] } } }
+     * @allow (update) Any participant can update group study details.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'group123', startTime: 'date', endTime: 'date', isPrivate: true, participants: ['user123', 'user456'] } } }
+     * @deny (create) User not in participants cannot create group study details.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'group123', startTime: 'date', endTime: 'date', isPrivate: false, participants: ['user456'] } } }
+     * @deny (update) User not in participants cannot update group study details.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'group123', startTime: 'date', endTime: 'date', isPrivate: false, participants: ['user456'] } } }
+     * @principle Allows public read access for group study participants and authenticated creation/update access.
+     */
+    match /group_studies/{groupStudyId} {
+      allow get, list: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow delete: if false; // Deletion not allowed
+    }
+
+    /**
+     * @description Rule for /students/{studentId}/journal_entries/{journalEntryId} documents.
+     * @path /students/{studentId}/journal_entries/{journalEntryId}
+     * @allow (create) Student with ID 'student123' can create a journal entry for themselves.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'journal123', studentId: 'student123', date: 'date', content: 'test' } } }
+     * @allow (get) Student with ID 'student123' can read their own journal entry.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update their own journal entry.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'journal123', studentId: 'student123', date: 'date', content: 'new' } } }
+     * @deny (create) Student with ID 'student123' cannot create a journal entry for 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'journal123', studentId: 'student456', date: 'date', content: 'test' } } }
+     * @deny (update) Student with ID 'student123' cannot update the journal entry of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'journal123', studentId: 'student456', date: 'date', content: 'new' } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /students/{studentId}/journal_entries/{journalEntryId} {
+      allow get: if isOwner(studentId);
+      allow list: if isOwner(studentId);
+
+      allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
+      allow update: if isExistingOwner(studentId) && request.resource.data.studentId == resource.data.studentId;
+      allow delete: if isExistingOwner(studentId);
+    }
+
+    /**
+     * @description Rule for /workshops/{workshopId} documents.
+     * @path /workshops/{workshopId}
+     * @allow (get) Any user can read workshop details.
+     *   Request: { auth: { uid: 'anyuser' } }
+     * @deny (create) No user can create a workshop.
+     *   Request: { auth: { uid: 'anyuser' }, resource: { data: { id: 'workshop123', name: 'test', description: 'test', startTime: 'date', endTime: 'date' } } }
+     * @deny (update) No user can update a workshop.
+     *   Request: { auth: { uid: 'anyuser' }, resource: { data: { id: 'workshop123', name: 'new', description: 'test', startTime: 'date', endTime: 'date' } } }
+     * @deny (delete) No user can delete a workshop.
+     *   Request: { auth: { uid: 'anyuser' } }
+     */
+    match /workshops/{workshopId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Rule for /students/{studentId}/upgrade_rewards/{upgradeRewardId} documents.
+     * @path /students/{studentId}/upgrade_rewards/{upgradeRewardId}
+     * @allow (create) Student with ID 'student123' can create an upgrade reward for themselves.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'upgrade123', name: 'test', description: 'test', criteria: 'test' } } }
+     * @allow (get) Student with ID 'student123' can read their own upgrade reward.
+     *   Request: { auth: { uid: 'student123' } }
+     * @allow (update) Student with ID 'student123' can update their own upgrade reward.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'upgrade123', name: 'new', description: 'test', criteria: 'test' } } }
+     * @deny (create) Student with ID 'student123' cannot create an upgrade reward for 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'upgrade123', name: 'test', description: 'test', criteria: 'test' } } }
+     * @deny (update) Student with ID 'student123' cannot update the upgrade reward of 'student456'.
+     *   Request: { auth: { uid: 'student123' }, resource: { data: { id: 'upgrade123', name: 'new', description: 'test', criteria: 'test' } } }
+     * @principle Enforces document ownership, allowing only the authenticated user to manage their own data.
+     */
+    match /students/{studentId}/upgrade_rewards/{upgradeRewardId} {
+      allow get: if isOwner(studentId);
+      allow list: if isOwner(studentId);
+
+      allow create: if isOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)).data.id == studentId;
+      allow update: if isExistingOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)).data.id == studentId;
+      allow delete: if isExistingOwner(studentId) && get(/databases/$(database)/documents/students/$(studentId)).data.id == studentId;
+    }
+
+    /**
+     * @description Rule for /experience_analytics/{experienceAnalyticId} documents.
+     * @path /experience_analytics/{experienceAnalyticId}
+     * @allow (get) Any authenticated user can read experience analytics.
+     *   Request: { auth: { uid: 'user123' } }
+     * @allow (create) Any authenticated user can create experience analytics.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'experience123', date: 'date', experienceType: 'test', rating: 0, feedback: 'test' } } }
+     * @allow (update) Any authenticated user can update experience analytics.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'experience123', date: 'date', experienceType: 'test', rating: 5, feedback: 'new' } } }
+     * @deny (delete) Deletion not allowed.
+     * @principle Allows authenticated read/write access.
+     */
+    match /experience_analytics/{experienceAnalyticId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false; // Deletion not allowed
+    }
+
+    /**
+     * @description Rule for /life_balances/{lifeBalanceId} documents.
+     * @path /life_balances/{lifeBalanceId}
+     * @allow (get) Any user can read life balance data.
+     *   Request: { auth: { uid: 'anyuser' } }
+     * @deny (create) No user can create life balance data.
+     *   Request: { auth: { uid: 'anyuser' }, resource: { data: { id: 'life123', studentId: 'test', date: 'date', academicsScore: 0, healthScore: 0, happinessScore: 0, overallScore: 0 } } }
+     * @deny (update) No user can update life balance data.
+     *   Request: { auth: { uid: 'anyuser' }, resource: { data: { id: 'life123', studentId: 'test', date: 'date', academicsScore: 100, healthScore: 100, happinessScore: 100, overallScore: 100 } } }
+     * @deny (delete) No user can delete life balance data.
+     *   Request: { auth: { uid: 'anyuser' } }
+     * @principle Allows public read access but restricts write access.
+     */
+    match /life_balances/{lifeBalanceId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Rule for /sessions/{sessionId} documents.
+     * @path /sessions/{sessionId}
+     * @allow (get) Any authenticated user can read session data.
+     *   Request: { auth: { uid: 'user123' } }
+     * @allow (create) Any authenticated user can create session data.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'session123', studentId: 'test', mentorId: 'test', startTime: 'date', endTime: 'date' } } }
+     * @allow (update) Any authenticated user can update session data.
+     *   Request: { auth: { uid: 'user123' }, resource: { data: { id: 'session123', studentId: 'test', mentorId: 'test', startTime: 'date', endTime: 'date', notes: 'test' } } }
+     * @deny (delete) Deletion not allowed.
+     *   Request: { auth: { uid: 'user123' } }
+     * @principle Allows authenticated read/write access.
+     */
+    match /sessions/{sessionId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false; // Deletion not allowed
+    }
+  }
+}

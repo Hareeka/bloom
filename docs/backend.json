@@ -1,0 +1,1024 @@
+{
+  "entities": {
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student in the Bloom application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The student's full name."
+        },
+        "course": {
+          "type": "string",
+          "description": "The student's current course of study."
+        },
+        "guidanceArea": {
+          "type": "string",
+          "description": "The area in which the student needs guidance."
+        },
+        "availability": {
+          "type": "string",
+          "description": "The student's time availability for mentorship."
+        },
+        "mentorPreference": {
+          "type": "string",
+          "description": "The student's preference for a mentor."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:1 Student)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "course",
+        "guidanceArea",
+        "availability"
+      ]
+    },
+    "Mentor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Mentor",
+      "type": "object",
+      "description": "Represents a mentor in the Bloom application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Mentor entity."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL of the mentor's profile photo.",
+          "format": "uri"
+        },
+        "title": {
+          "type": "string",
+          "description": "The mentor's title or designation."
+        },
+        "specialties": {
+          "type": "string",
+          "description": "The mentor's areas of expertise."
+        },
+        "experience": {
+          "type": "string",
+          "description": "The mentor's experience details."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:1 Mentor)"
+        }
+      },
+      "required": [
+        "id",
+        "photoUrl",
+        "title",
+        "specialties",
+        "experience"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user (either student or mentor) in the system. Note: Authentication data (passwords) are not stored here.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user (e.g., 'student', 'mentor')."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role"
+      ]
+    },
+    "Plan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Plan",
+      "type": "object",
+      "description": "Represents a 7-day plan generated for a student by a mentor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Plan entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Plan)"
+        },
+        "mentorId": {
+          "type": "string",
+          "description": "Reference to Mentor. (Relationship: Mentor 1:N Plan)"
+        },
+        "generatedDate": {
+          "type": "string",
+          "description": "The date the plan was generated.",
+          "format": "date-time"
+        },
+        "days": {
+          "type": "array",
+          "description": "List of Day objects",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "mentorId",
+        "generatedDate"
+      ]
+    },
+    "Day": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Day",
+      "type": "object",
+      "description": "Represents a day in the 7 day plan.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Day entity."
+        },
+        "planId": {
+          "type": "string",
+          "description": "Reference to Plan. (Relationship: Plan 1:N Day)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the Day.",
+          "format": "date"
+        },
+        "tasks": {
+          "type": "array",
+          "description": "List of Task objects",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "planId",
+        "date"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task in a day of a plan.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "dayId": {
+          "type": "string",
+          "description": "Reference to Day. (Relationship: Day 1:N Task)"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the task."
+        },
+        "timing": {
+          "type": "string",
+          "description": "The timing of the task."
+        },
+        "priority": {
+          "type": "string",
+          "description": "The priority of the task."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Whether the task is completed or not."
+        }
+      },
+      "required": [
+        "id",
+        "dayId",
+        "description",
+        "timing",
+        "priority",
+        "isCompleted"
+      ]
+    },
+    "Progress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Progress",
+      "type": "object",
+      "description": "Represents the progress of a student in the plan.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Progress entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Progress)"
+        },
+        "planId": {
+          "type": "string",
+          "description": "Reference to Plan. (Relationship: Plan 1:N Progress)"
+        },
+        "completionPercentage": {
+          "type": "number",
+          "description": "The completion percentage of the plan."
+        },
+        "pointsEarned": {
+          "type": "number",
+          "description": "The points earned by the student."
+        },
+        "streakCounter": {
+          "type": "number",
+          "description": "The streak counter of the student."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "The last updated date of the progress.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "planId",
+        "completionPercentage",
+        "pointsEarned",
+        "streakCounter"
+      ]
+    },
+    "Reflection": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reflection",
+      "type": "object",
+      "description": "Represents a daily reflection of a student.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Reflection entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Reflection)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the reflection.",
+          "format": "date"
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the reflection."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "date",
+        "content"
+      ]
+    },
+    "Reward": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reward",
+      "type": "object",
+      "description": "Represents a reward in the gamification system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Reward entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the reward."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the reward."
+        },
+        "pointsRequired": {
+          "type": "number",
+          "description": "The points required to unlock the reward."
+        },
+        "rewardType": {
+          "type": "string",
+          "description": "The type of the reward (e.g., 'badge', 'level')."
+        },
+        "studentIds": {
+          "type": "array",
+          "description": "References to Students. (Relationship: Student N:N Reward)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "pointsRequired",
+        "rewardType"
+      ]
+    },
+    "MentorAnalytics": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MentorAnalytics",
+      "type": "object",
+      "description": "Represents the analytics data for a mentor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MentorAnalytics entity."
+        },
+        "mentorId": {
+          "type": "string",
+          "description": "Reference to Mentor. (Relationship: Mentor 1:N MentorAnalytics)"
+        },
+        "studentList": {
+          "type": "array",
+          "description": "List of student IDs associated with the mentor.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "completionPercentages": {
+          "type": "string",
+          "description": "Completion percentages of the mentor's students."
+        },
+        "timeSpent": {
+          "type": "string",
+          "description": "Time spent by the mentor with students."
+        },
+        "missedTasks": {
+          "type": "string",
+          "description": "Missed tasks by the mentor's students."
+        },
+        "engagementGraphs": {
+          "type": "string",
+          "description": "Engagement graphs for the mentor's students."
+        }
+      },
+      "required": [
+        "id",
+        "mentorId",
+        "studentList",
+        "completionPercentages",
+        "timeSpent",
+        "missedTasks",
+        "engagementGraphs"
+      ]
+    },
+    "GroupStudy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GroupStudy",
+      "type": "object",
+      "description": "Represents a group study session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GroupStudy entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the group study (optional)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the group study session."
+        },
+        "participants": {
+          "type": "array",
+          "description": "List of user IDs participating in the group study.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the group study session.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the group study session.",
+          "format": "date-time"
+        },
+        "isPrivate": {
+          "type": "boolean",
+          "description": "Indicates if the group study is private."
+        },
+        "link": {
+          "type": "string",
+          "description": "Link to join the group study session.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "startTime",
+        "endTime",
+        "isPrivate"
+      ]
+    },
+    "JournalEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "JournalEntry",
+      "type": "object",
+      "description": "Represents a structured journal/diary entry.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the JournalEntry entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N JournalEntry)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the journal entry.",
+          "format": "date"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the journal entry."
+        },
+        "content": {
+          "type": "string",
+          "description": "Content of the journal entry."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "date",
+        "content"
+      ]
+    },
+    "Workshop": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Workshop",
+      "type": "object",
+      "description": "Represents a 1-hour workshop/demo session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Workshop entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the workshop."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the workshop."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the workshop.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the workshop.",
+          "format": "date-time"
+        },
+        "mentorId": {
+          "type": "string",
+          "description": "Reference to Mentor. (Relationship: Mentor 1:N Workshop)"
+        },
+        "studentIds": {
+          "type": "array",
+          "description": "References to Students. (Relationship: Student N:N Workshop)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "startTime",
+        "endTime"
+      ]
+    },
+    "UpgradeReward": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UpgradeReward",
+      "type": "object",
+      "description": "Represents a reward given for unlocking the upgraded version.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UpgradeReward entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the reward."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the reward."
+        },
+        "criteria": {
+          "type": "string",
+          "description": "Criteria to achieve the reward (e.g., participation, soft skills)."
+        },
+        "studentIds": {
+          "type": "array",
+          "description": "References to Students. (Relationship: Student N:N UpgradeReward)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "criteria"
+      ]
+    },
+    "ExperienceAnalytic": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ExperienceAnalytic",
+      "type": "object",
+      "description": "Represents analytic data for student and mentor experiences.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ExperienceAnalytic entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N ExperienceAnalytic)"
+        },
+        "mentorId": {
+          "type": "string",
+          "description": "Reference to Mentor. (Relationship: Mentor 1:N ExperienceAnalytic)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the analytic data.",
+          "format": "date"
+        },
+        "experienceType": {
+          "type": "string",
+          "description": "Type of experience (e.g., in-app, real-life)."
+        },
+        "rating": {
+          "type": "number",
+          "description": "Rating of the experience."
+        },
+        "feedback": {
+          "type": "string",
+          "description": "Feedback on the experience."
+        }
+      },
+      "required": [
+        "id",
+        "date",
+        "experienceType",
+        "rating",
+        "feedback"
+      ]
+    },
+    "LifeBalance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LifeBalance",
+      "type": "object",
+      "description": "Represents the life balance data for a student.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LifeBalance entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N LifeBalance)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the life balance data.",
+          "format": "date"
+        },
+        "academicsScore": {
+          "type": "number",
+          "description": "Score for the academics aspect."
+        },
+        "healthScore": {
+          "type": "number",
+          "description": "Score for the health aspect."
+        },
+        "happinessScore": {
+          "type": "number",
+          "description": "Score for the happiness aspect."
+        },
+        "overallScore": {
+          "type": "number",
+          "description": "Overall life balance score."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "date",
+        "academicsScore",
+        "healthScore",
+        "happinessScore",
+        "overallScore"
+      ]
+    },
+    "Session": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Session",
+      "type": "object",
+      "description": "Represents a 1:1 video/call session between a student and a mentor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Session entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Session)"
+        },
+        "mentorId": {
+          "type": "string",
+          "description": "Reference to Mentor. (Relationship: Mentor 1:N Session)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the session.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the session.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Notes from the session."
+        },
+        "platform": {
+          "type": "string",
+          "description": "Platform used for the session (e.g., Jitsi, Zoom)."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "mentorId",
+        "startTime",
+        "endTime"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Includes 'id', 'email', and 'role'.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}",
+        "definition": {
+          "entityName": "Student",
+          "schema": {
+            "$ref": "#/backend/entities/Student"
+          },
+          "description": "Stores student profiles. Includes student's details such as name, course, guidance area, and availability.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/mentors/{mentorId}",
+        "definition": {
+          "entityName": "Mentor",
+          "schema": {
+            "$ref": "#/backend/entities/Mentor"
+          },
+          "description": "Stores mentor profiles. Includes photo URL, title, specialties, and experience.",
+          "params": [
+            {
+              "name": "mentorId",
+              "description": "The unique identifier for the mentor."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/plans/{planId}",
+        "definition": {
+          "entityName": "Plan",
+          "schema": {
+            "$ref": "#/backend/entities/Plan"
+          },
+          "description": "Stores plans generated for students. Includes student ID, mentor ID, generated date, and days. Parent: Student.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "planId",
+              "description": "The unique identifier for the plan."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/plans/{planId}/days/{dayId}",
+        "definition": {
+          "entityName": "Day",
+          "schema": {
+            "$ref": "#/backend/entities/Day"
+          },
+          "description": "Stores days within a plan. Includes plan ID, date, and tasks. Parent: Plan.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "planId",
+              "description": "The unique identifier for the plan."
+            },
+            {
+              "name": "dayId",
+              "description": "The unique identifier for the day."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/plans/{planId}/days/{dayId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks within a day. Includes day ID, description, timing, priority, and completion status. Parent: Day.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "planId",
+              "description": "The unique identifier for the plan."
+            },
+            {
+              "name": "dayId",
+              "description": "The unique identifier for the day."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique identifier for the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/progress/{progressId}",
+        "definition": {
+          "entityName": "Progress",
+          "schema": {
+            "$ref": "#/backend/entities/Progress"
+          },
+          "description": "Stores progress data for students. Includes student ID, plan ID, completion percentage, points earned, streak counter, and last updated date. Parent: Student.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "progressId",
+              "description": "The unique identifier for the progress."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/reflections/{reflectionId}",
+        "definition": {
+          "entityName": "Reflection",
+          "schema": {
+            "$ref": "#/backend/entities/Reflection"
+          },
+          "description": "Stores daily reflections for students. Includes student ID, date, and content. Parent: Student.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "reflectionId",
+              "description": "The unique identifier for the reflection."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/rewards/{rewardId}",
+        "definition": {
+          "entityName": "Reward",
+          "schema": {
+            "$ref": "#/backend/entities/Reward"
+          },
+          "description": "Stores information about available rewards.",
+          "params": [
+            {
+              "name": "rewardId",
+              "description": "The unique identifier for the reward."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/mentors/{mentorId}/analytics/{analyticsId}",
+        "definition": {
+          "entityName": "MentorAnalytics",
+          "schema": {
+            "$ref": "#/backend/entities/MentorAnalytics"
+          },
+          "description": "Stores analytics data for mentors. Includes mentor ID, student list, completion percentages, time spent, missed tasks, and engagement graphs. Parent: Mentor.",
+          "params": [
+            {
+              "name": "mentorId",
+              "description": "The unique identifier for the mentor."
+            },
+            {
+              "name": "analyticsId",
+              "description": "The unique identifier for the analytics data."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/group_studies/{groupStudyId}",
+        "definition": {
+          "entityName": "GroupStudy",
+          "schema": {
+            "$ref": "#/backend/entities/GroupStudy"
+          },
+          "description": "Stores group study session details. Includes name, description, participants, start time, end time, privacy, and link.",
+          "params": [
+            {
+              "name": "groupStudyId",
+              "description": "The unique identifier for the group study session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/journal_entries/{journalEntryId}",
+        "definition": {
+          "entityName": "JournalEntry",
+          "schema": {
+            "$ref": "#/backend/entities/JournalEntry"
+          },
+          "description": "Stores structured journal entries for students. Includes student ID, date, title, and content. Parent: Student.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "journalEntryId",
+              "description": "The unique identifier for the journal entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/workshops/{workshopId}",
+        "definition": {
+          "entityName": "Workshop",
+          "schema": {
+            "$ref": "#/backend/entities/Workshop"
+          },
+          "description": "Stores workshop details. Includes name, description, start time, end time, mentor ID, and student IDs.",
+          "params": [
+            {
+              "name": "workshopId",
+              "description": "The unique identifier for the workshop."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/upgrade_rewards/{upgradeRewardId}",
+        "definition": {
+          "entityName": "UpgradeReward",
+          "schema": {
+            "$ref": "#/backend/entities/UpgradeReward"
+          },
+          "description": "Stores upgrade rewards for students. Includes name, description, criteria, and student IDs. Parent: Student.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "upgradeRewardId",
+              "description": "The unique identifier for the upgrade reward."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/experience_analytics/{experienceAnalyticId}",
+        "definition": {
+          "entityName": "ExperienceAnalytic",
+          "schema": {
+            "$ref": "#/backend/entities/ExperienceAnalytic"
+          },
+          "description": "Stores analytic data for student and mentor experiences. Includes student ID, mentor ID, date, experience type, rating, and feedback.",
+          "params": [
+            {
+              "name": "experienceAnalyticId",
+              "description": "The unique identifier for the experience analytic."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/life_balances/{lifeBalanceId}",
+        "definition": {
+          "entityName": "LifeBalance",
+          "schema": {
+            "$ref": "#/backend/entities/LifeBalance"
+          },
+          "description": "Stores life balance data for students. Includes student ID, date, academics score, health score, happiness score, and overall score.",
+          "params": [
+            {
+              "name": "lifeBalanceId",
+              "description": "The unique identifier for the life balance data."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sessions/{sessionId}",
+        "definition": {
+          "entityName": "Session",
+          "schema": {
+            "$ref": "#/backend/entities/Session"
+          },
+          "description": "Stores session data. Includes session ID, student ID,  mentorId, start time, end time, notes, and platform.",
+          "params": [
+            {
+              "name": "sessionId",
+              "description": "The unique identifier for the session data."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the Bloom application's features while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It utilizes structural segregation to ensure that collections contain documents with similar security requirements and denormalization to avoid hierarchical authorization dependencies.\n\nAuthorization Independence is achieved by denormalizing authorization-related data. For example, in the `/users/{userId}/plans/{planId}/days/{dayId}/tasks/{taskId}` path, if task-level authorization depended on the plan's ownership, the plan's `mentorId` or a `members` map would be denormalized into each task document. This eliminates the need for `get()` calls in security rules, supporting atomic operations.\n\nStructural Segregation is applied by separating user-owned data into `/users/{userId}` subcollections. This ensures a homogeneous security posture within each collection. Collaborative data, such as group study sessions, could use a `members` map within the document to manage access control.\n\nQAPs are supported via structural segregation. Lists of plans, days, or tasks can be securely queried within the user's path without exposing data from other users.\n\nThe `Reward` and `UpgradeReward` collections use a subcollection approach under `students/{studentId}` to track which students have earned specific rewards. Alternatively, rewards can be stored in a top-level collection and include a `studentIds` array. The subcollection approach is preferred when you need to query which rewards a specific student has earned efficiently, while the top-level collection with the `studentIds` array is more efficient if you frequently need to list all students who have a particular reward."
+  }
+}
