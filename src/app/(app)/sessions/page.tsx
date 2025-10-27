@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, Video } from "lucide-react";
+import Link from "next/link";
 
 export default function SessionsPage() {
   return (
@@ -28,9 +29,11 @@ export default function SessionsPage() {
             <CardContent className="grid md:grid-cols-3 gap-4">
                  <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="h-5 w-5 text-primary"/> <span>Tomorrow, June 25th</span></div>
                  <div className="flex items-center gap-2 text-muted-foreground"><Clock className="h-5 w-5 text-primary"/> <span>4:00 PM (your time)</span></div>
-                 <Button>
-                    <Video className="mr-2 h-4 w-4"/>
-                    Join Video Call
+                 <Button asChild>
+                    <Link href="/session/career-path-discussion">
+                        <Video className="mr-2 h-4 w-4"/>
+                        Join Video Call
+                    </Link>
                  </Button>
             </CardContent>
           </Card>

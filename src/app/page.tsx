@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Leaf, Zap, Award } from "lucide-react";
+import { CheckCircle, Leaf, Zap, Award, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -36,6 +36,12 @@ export default function LandingPage() {
             <nav className="flex items-center space-x-2">
               <Button variant="link" asChild>
                 <Link href="/mentor-onboarding">Become a Mentor</Link>
+              </Button>
+               <Button variant="link" asChild>
+                <Link href="/rewards">
+                  <Star className="mr-2 h-4 w-4 text-yellow-400" />
+                  Rewards
+                </Link>
               </Button>
               <Button variant="ghost" asChild>
                 <Link href="/onboarding">Sign In</Link>

@@ -26,6 +26,7 @@ import {
   Settings,
   Shield,
   Sprout,
+  Star,
   Users,
   Video,
 } from "lucide-react";
@@ -53,6 +54,7 @@ const navItems = [
   { href: "/sessions", icon: Video, label: "Sessions" },
   { href: "/group-study", icon: Users, label: "Group Study" },
   { href: "/workshops", icon: Award, label: "Workshops" },
+  { href: "/rewards", icon: Star, label: "Rewards" },
   { href: "/mentor-dashboard", icon: Shield, label: "Mentor View" },
 ];
 
