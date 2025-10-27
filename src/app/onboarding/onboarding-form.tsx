@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useUser, useFirestore, setDocumentNonBlocking, FirebaseClientProvider } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -238,9 +239,15 @@ function OnboardingForm() {
 }
 
 export function OnboardingFormComponent() {
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <FirebaseClientProvider>
-      <OnboardingForm />
+      {isClient ? <OnboardingForm /> : null}
     </FirebaseClientProvider>
   )
 }
