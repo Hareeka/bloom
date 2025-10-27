@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SessionRoomPage({ params }: { params: { id: string } }) {
   const [isMuted, setIsMuted] = useState(false);
@@ -74,9 +75,8 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
                 <Image 
                     src="https://images.unsplash.com/photo-1592621385612-4d7129426394?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2MTQ5MDEzNHww&ixlib=rb-4.1.0&q=80&w=1080"
                     alt="Mentor's video feed"
-                    layout="fill"
-                    objectFit="cover"
-                    className="opacity-90"
+                    fill
+                    className="object-cover opacity-90"
                 />
              </Card>
 
@@ -130,7 +130,3 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
-
-// A placeholder for the Next.js Image component to avoid build errors.
-const Image = (props: any) => <img {...props} />;
