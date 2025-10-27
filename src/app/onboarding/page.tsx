@@ -4,6 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
+import { useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +42,9 @@ const formSchema = z.object({
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,8 +58,28 @@ export default function OnboardingPage() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    router.push("/dashboard");
+    if (!user || !firestore) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const studentRef = doc(firestore, `students/${user.uid}`);
+    
+    setDocumentNonBlocking(studentRef, {
+      ...values,
+      userId: user.uid,
+    }, { merge: true });
+
+    toast({
+      title: "Profile Saved!",
+      description: "Your student profile has been created.",
+    });
+
+    router.push("/matching");
   }
 
   return (
@@ -136,7 +162,7 @@ export default function OnboardingPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select your availability" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="<5">Less than 5 hours/week</SelectItem>
