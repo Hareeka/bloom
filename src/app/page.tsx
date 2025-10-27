@@ -29,14 +29,8 @@ export default function LandingPage() {
           <Logo />
           <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="flex items-center space-x-2">
-              <Button variant="link" asChild>
-                <Link href="/mentor-onboarding">Become a Mentor</Link>
-              </Button>
               <Button variant="ghost" asChild>
                 <Link href="/onboarding">Sign In</Link>
-              </Button>
-              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Link href="/onboarding">Get Started</Link>
               </Button>
             </nav>
           </div>
@@ -52,9 +46,12 @@ export default function LandingPage() {
             <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-muted-foreground">
               Bloom transforms mentor advice into actionable plans. Match with experts, get AI-powered guidance, and watch yourself flourish.
             </p>
-            <div className="mt-8 flex justify-center gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
               <Button size="lg" asChild>
-                <Link href="/onboarding">Start Your Journey</Link>
+                <Link href="/onboarding">I'm a Student</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/mentor-onboarding">I'm a Mentor</Link>
               </Button>
             </div>
           </div>
