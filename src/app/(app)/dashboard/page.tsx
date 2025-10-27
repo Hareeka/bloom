@@ -30,12 +30,10 @@ import {
 } from "recharts";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-
-const lifeBalanceData = [
-  { name: "Academics", value: 40, color: "hsl(var(--chart-1))" },
-  { name: "Health", value: 30, color: "hsl(var(--chart-2))" },
-  { name: "Happiness", value: 30, color: "hsl(var(--chart-3))" },
-];
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where, limit, orderBy, Timestamp } from "firebase/firestore";
+import { subDays } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const progressData = [
     { name: 'Mon', completed: 2 },
@@ -49,6 +47,48 @@ const progressData = [
 
 
 function LifeBalanceMeter() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const journalEntriesQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    const sevenDaysAgo = subDays(new Date(), 7);
+    return query(
+      collection(firestore, `students/${user.uid}/journal_entries`),
+      where('date', '>=', Timestamp.fromDate(sevenDaysAgo)),
+      orderBy('date', 'desc'),
+      limit(7)
+    );
+  }, [user, firestore]);
+
+  const { data: journalEntries, isLoading } = useCollection(journalEntriesQuery);
+
+  const lifeBalanceData = React.useMemo(() => {
+    if (!journalEntries || journalEntries.length === 0) {
+      return [
+        { name: "Academics", value: 33.3, color: "hsl(var(--chart-1))" },
+        { name: "Health", value: 33.3, color: "hsl(var(--chart-2))" },
+        { name: "Happiness", value: 33.3, color: "hsl(var(--chart-3))" },
+      ];
+    }
+    
+    const totals = journalEntries.reduce((acc, entry) => {
+        acc.academics += entry.academicsScore;
+        acc.health += entry.healthScore;
+        acc.happiness += entry.happinessScore;
+        return acc;
+    }, {academics: 0, health: 0, happiness: 0});
+
+    const numEntries = journalEntries.length;
+    return [
+        { name: "Academics", value: totals.academics / numEntries, color: "hsl(var(--chart-1))" },
+        { name: "Health", value: totals.health / numEntries, color: "hsl(var(--chart-2))" },
+        { name: "Happiness", value: totals.happiness / numEntries, color: "hsl(var(--chart-3))" },
+    ];
+
+  }, [journalEntries]);
+
+
   return (
     <Card>
       <CardHeader>
@@ -59,29 +99,35 @@ function LifeBalanceMeter() {
         <CardDescription>Your weekly balance across key areas.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-60 w-full">
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie
-                data={lifeBalanceData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
-              >
-                {lifeBalanceData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <RechartsTooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+         {isLoading ? (
+            <div className="h-60 w-full flex items-center justify-center">
+                <Skeleton className="h-48 w-48 rounded-full" />
+            </div>
+         ) : (
+            <div className="h-60 w-full">
+            <ResponsiveContainer>
+                <PieChart>
+                <Pie
+                    data={lifeBalanceData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, value }) =>
+                    `${name} ${value.toFixed(0)}%`
+                    }
+                >
+                    {lifeBalanceData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                </Pie>
+                <RechartsTooltip formatter={(value, name) => [`${(value as number).toFixed(1)}%`, name]} />
+                </PieChart>
+            </ResponsiveContainer>
+            </div>
+         )}
         <div className="mt-4 flex justify-around text-sm">
             <div className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[hsl(var(--chart-1))]"/>Academics</div>
             <div className="flex items-center gap-2"><HeartPulse className="h-4 w-4 text-[hsl(var(--chart-2))]"/>Health</div>
@@ -178,10 +224,35 @@ function MotivationalQuote() {
 
 
 export default function DashboardPage() {
+    const { user, isUserLoading } = useUser();
+    
+    if (isUserLoading) {
+        return (
+             <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+                <div className="col-span-1 xl:col-span-3">
+                    <Skeleton className="h-10 w-1/2" />
+                    <Skeleton className="h-6 w-1/3 mt-2" />
+                </div>
+                 <div className="lg:col-span-2 xl:col-span-1">
+                    <Skeleton className="h-96" />
+                </div>
+                <div className="lg:col-span-2 xl:col-span-2">
+                    <Skeleton className="h-96" />
+                </div>
+                 <div className="lg:col-span-1 xl:col-span-2">
+                    <Skeleton className="h-80" />
+                </div>
+                 <div className="lg:col-span-1 xl:col-span-1">
+                    <Skeleton className="h-80" />
+                </div>
+             </div>
+        )
+    }
+
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
         <div className="col-span-1 xl:col-span-3">
-            <h1 className="text-3xl font-bold font-headline">Welcome back, Student!</h1>
+            <h1 className="text-3xl font-bold font-headline">Welcome back, {user?.isAnonymous ? 'Student' : (user?.displayName || 'Student')}!</h1>
             <p className="text-muted-foreground">Here's a snapshot of your journey with Bloom.</p>
         </div>
       

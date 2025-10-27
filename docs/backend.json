@@ -464,13 +464,28 @@
         "content": {
           "type": "string",
           "description": "Content of the journal entry."
+        },
+        "academicsScore": {
+          "type": "number",
+          "description": "Score for the academics aspect."
+        },
+        "healthScore": {
+          "type": "number",
+          "description": "Score for the health aspect."
+        },
+        "happinessScore": {
+          "type": "number",
+          "description": "Score for the happiness aspect."
         }
       },
       "required": [
         "id",
         "studentId",
         "date",
-        "content"
+        "content",
+        "academicsScore",
+        "healthScore",
+        "happinessScore"
       ]
     },
     "Workshop": {
@@ -921,7 +936,7 @@
           "schema": {
             "$ref": "#/backend/entities/JournalEntry"
           },
-          "description": "Stores structured journal entries for students. Includes student ID, date, title, and content. Parent: Student.",
+          "description": "Stores structured journal entries for students. Includes student ID, date, title, content, and life balance scores. Parent: Student.",
           "params": [
             {
               "name": "studentId",

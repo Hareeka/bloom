@@ -45,6 +45,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FirebaseClientProvider, useUser, useAuth } from "@/firebase";
+import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -89,7 +92,8 @@ function AppSidebar() {
 
 function AppHeader() {
   const { toggleSidebar } = useSidebar();
-  const isMobile = useIsMobile();
+  const { user, isUserLoading } = useUser();
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
        <Button
@@ -105,18 +109,22 @@ function AppHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+               {isUserLoading ? (
+                <Skeleton className="h-9 w-9 rounded-full" />
+              ) : (
               <Avatar className="h-9 w-9">
-                <AvatarImage src="https://picsum.photos/seed/user-avatar/100/100" alt="User" />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage src={user?.photoURL ?? "https://picsum.photos/seed/user-avatar/100/100"} alt="User" />
+                <AvatarFallback>{user?.email?.[0]?.toUpperCase() ?? 'U'}</AvatarFallback>
               </Avatar>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Student User</p>
+                <p className="text-sm font-medium leading-none">{isUserLoading ? 'Loading...' : user?.isAnonymous ? 'Anonymous User' : (user?.displayName || 'Student User')}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  student@example.com
+                   {isUserLoading ? '' : user?.isAnonymous ? 'anonymous@example.com' : (user?.email || 'student@example.com')}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -142,19 +150,36 @@ function AppHeader() {
   );
 }
 
+function AuthProvider({ children }: { children: React.ReactNode }) {
+    const auth = useAuth();
+    const { user, isUserLoading } = useUser();
+
+    React.useEffect(() => {
+        if (!isUserLoading && !user) {
+            initiateAnonymousSignIn(auth);
+        }
+    }, [auth, user, isUserLoading]);
+    
+    return <>{children}</>;
+}
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-col w-full">
-           <AppHeader />
-           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/40">
-              {children}
-           </main>
-        </div>
-      </div>
-    </SidebarProvider>
+    <FirebaseClientProvider>
+      <AuthProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar />
+            <div className="flex flex-col w-full">
+              <AppHeader />
+              <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/40">
+                  {children}
+              </main>
+            </div>
+          </div>
+        </SidebarProvider>
+      </AuthProvider>
+    </FirebaseClientProvider>
   );
 }
