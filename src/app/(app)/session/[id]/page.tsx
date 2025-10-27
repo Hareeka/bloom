@@ -84,7 +84,7 @@ export default function SessionRoomPage({ params }: { params: { id: string } }) 
                  <div className="absolute top-2 left-2 z-10">
                     <Badge variant="secondary">You</Badge>
                  </div>
-                 <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted />
+                 <video ref={videoRef} className={cn("w-full h-full object-cover", isCameraOff ? "hidden" : "block")} autoPlay muted />
                  {isCameraOff && <div className="absolute inset-0 bg-black flex items-center justify-center"><VideoOff className="h-8 w-8 text-white"/></div>}
              </Card>
         </main>
