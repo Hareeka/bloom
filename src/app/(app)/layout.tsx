@@ -167,7 +167,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="dark">
+    <div>
       <FirebaseClientProvider>
         <AuthProvider>
           <SidebarProvider>
