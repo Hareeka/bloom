@@ -29,8 +29,11 @@ export default function LandingPage() {
           <Logo />
           <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="flex items-center space-x-2">
-              <Button variant="ghost" asChild>
+               <Button variant="ghost" asChild>
                 <Link href="/onboarding">Sign In</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/onboarding">Get Started</Link>
               </Button>
             </nav>
           </div>
@@ -40,7 +43,7 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="py-24 md:py-32 lg:py-40 text-center">
           <div className="container">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-headline tracking-tighter bg-gradient-to-r from-white to-primary/80 text-transparent bg-clip-text">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-headline tracking-tighter">
               Nurturing Growth, One Goal at a Time.
             </h1>
             <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-muted-foreground">

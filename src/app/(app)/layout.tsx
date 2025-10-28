@@ -52,9 +52,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/matching", icon: Users, label: "Find Mentors" },
+  { href: "/sessions", icon: Video, label: "Sessions" },
+  { href: "/reminders", icon: Calendar, label: "Set Reminders"},
   { href: "/plan", icon: Sprout, label: "7-Day Plan" },
   { href: "/journal", icon: BookOpen, label: "Journal" },
-  { href: "/sessions", icon: Video, label: "Sessions" },
   { href: "/group-study", icon: Users, label: "Group Study" },
   { href: "/workshops", icon: Award, label: "Workshops" },
   { href: "/rewards", icon: Star, label: "Rewards" },
