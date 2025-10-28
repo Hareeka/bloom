@@ -32,7 +32,7 @@ export default function LandingPage() {
               <Button variant="ghost" asChild>
                 <Link href="/onboarding">Sign In</Link>
               </Button>
-              <Button asChild className="bg-gradient-to-r from-[#FFB6C1] to-[#A16AE8] text-white">
+              <Button asChild>
                 <Link href="/onboarding">Get Started</Link>
               </Button>
             </nav>
@@ -41,19 +41,19 @@ export default function LandingPage() {
       </header>
       
       <main className="flex-1">
-        <section className="py-24 md:py-32 lg:py-40 text-center relative text-white bg-gradient-to-r from-[#FFB6C1] to-[#A16AE8]">
+        <section className="py-24 md:py-32 lg:py-40 text-center relative bg-gradient-to-r from-orange-100 to-amber-100 text-foreground">
           <div className="container">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-headline tracking-tighter">
               Nurturing Growth, One Goal at a Time.
             </h1>
-            <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-white/90">
+            <p className="max-w-3xl mx-auto mt-6 text-lg md:text-xl text-foreground/80">
               Bloom transforms mentor advice into actionable plans. Match with experts, get AI-powered guidance, and watch yourself flourish.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" asChild className="bg-white text-black hover:bg-white/90">
+              <Button size="lg" asChild>
                 <Link href="/onboarding">I'm a Student</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="bg-transparent border-white text-white hover:bg-white hover:text-primary">
+              <Button size="lg" variant="outline" asChild>
                 <Link href="/mentor-onboarding">I'm a Mentor</Link>
               </Button>
             </div>
