@@ -192,7 +192,7 @@ function GamificationStatus() {
                     </div>
                     <div>
                         <p className="text-2xl font-bold flex items-center justify-center gap-1">
-                            <Zap className="h-6 w-6 text-yellow-500" /> 5 days
+                            <Zap className="h-6 w-6 text-accent" /> 5 days
                         </p>
                         <p className="text-sm text-muted-foreground">Current Streak</p>
                     </div>
@@ -211,7 +211,7 @@ function GamificationStatus() {
 
 function MotivationalQuote() {
     return (
-        <Card className="bg-primary text-primary-foreground">
+        <Card className="bg-gradient-to-r from-[#FFB6C1] to-[#A16AE8] text-white">
             <CardContent className="p-6">
                 <blockquote className="text-lg font-semibold text-center">
                 "The secret of getting ahead is getting started."
