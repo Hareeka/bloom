@@ -5,10 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { useUser, useFirestore, setDocumentNonBlocking, FirebaseClientProvider } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +32,11 @@ import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+
+import { useUser, useFirestore } from "@/firebase/provider";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -62,17 +66,10 @@ function OnboardingForm() {
   });
 
   useEffect(() => {
-    if (user && !isUserLoading) {
-      form.reset({
-        name: user.displayName || "",
-        course: "",
-        guidanceArea: "",
-        availability: "",
-        interests: "",
-        mentorPreference: "any",
-      });
+    if (user && !user.isAnonymous && user.displayName) {
+      form.setValue('name', user.displayName);
     }
-  }, [user, isUserLoading, form]);
+  }, [user, form]);
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -274,15 +271,9 @@ function OnboardingForm() {
 
 
 export function OnboardingFormComponent() {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   return (
      <FirebaseClientProvider>
-      {isClient ? <OnboardingForm /> : null}
+      <OnboardingForm />
     </FirebaseClientProvider>
   )
 }
